@@ -31,6 +31,10 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    # Meus Apps
+    'core',
+
+    # Apps Nativos do Django
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
