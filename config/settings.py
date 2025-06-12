@@ -1,3 +1,12 @@
+# config/settings.py
+import os
+from dotenv import load_dotenv
+
+# ... (o resto dos imports) ...
+
+# Carrega as variáveis do arquivo .env para o ambiente
+load_dotenv()
+
 """
 Django settings for config project.
 
@@ -79,9 +88,10 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'projeto_zenite', # O nome do banco que criamos
-        'USER': 'postgres', # O usuário padrão do PostgreSQL
-        'PASSWORD': '*99839Lu93',
+        'NAME': 'projeto_zenite',
+        'USER': 'postgres',
+        # Agora lê a senha da variável de ambiente
+        'PASSWORD': os.getenv('DATABASE_PASSWORD'),
         'HOST': 'localhost',
         'PORT': '5432',
     }
