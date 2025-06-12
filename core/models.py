@@ -79,3 +79,59 @@ class ItemPlanoCompra(models.Model): # Note que este não herda de BaseModel
     class Meta:
         verbose_name = "Item do Plano de Compra"
         verbose_name_plural = "Itens dos Planos de Compra"
+
+class NotaFiscal(BaseModel):
+    numero = models.CharField(max_length=50, verbose_name="Número da NF")
+    fornecedor = models.ForeignKey(Fornecedor, on_delete=models.PROTECT, verbose_name="Fornecedor")
+    data_emissao = models.DateField(verbose_name="Data de Emissão da NF")
+    valor_total = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Valor Total da NF")
+    arquivo_xml = models.FileField(upload_to='notas_fiscais/', blank=True, null=True, verbose_name="Arquivo XML")
+
+    def __str__(self):
+        return f"NF {self.numero} - {self.fornecedor.nome_fantasia}"
+
+    class Meta:
+        verbose_name = "Nota Fiscal"
+        verbose_name_plural = "Notas Fiscais"
+        # Garante que um fornecedor não pode ter duas notas com o mesmo número
+        unique_together = ('numero', 'fornecedor')
+
+class ItemNotaFiscal(models.Model):
+    nota_fiscal = models.ForeignKey(NotaFiscal, on_delete=models.CASCADE, related_name="itens_nf")
+    material = models.ForeignKey(Material, on_delete=models.PROTECT)
+    quantidade = models.DecimalField(max_digits=10, decimal_places=2)
+    valor_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"Item {self.material.codigo_interno} da NF {self.nota_fiscal.numero}"
+    
+    class Meta:
+        verbose_name = "Item da Nota Fiscal"
+        verbose_name_plural = "Itens das Notas Fiscais"
+
+
+class Recebimento(BaseModel):
+    plano_compra = models.ForeignKey(PlanoCompra, on_delete=models.PROTECT, verbose_name="Plano de Compra Vinculado")
+    nota_fiscal = models.ForeignKey(NotaFiscal, on_delete=models.PROTECT, verbose_name="Nota Fiscal Vinculada")
+    conferente = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Conferente")
+    data_recebimento = models.DateTimeField(auto_now_add=True, verbose_name="Data do Recebimento")
+    observacoes = models.TextField(blank=True, null=True, verbose_name="Observações")
+
+    def __str__(self):
+        return f"Recebimento do Plano {self.plano_compra.codigo_plano} em {self.data_recebimento.strftime('%d/%m/%Y')}"
+
+    class Meta:
+        verbose_name = "Recebimento Físico"
+        verbose_name_plural = "Recebimentos Físicos"
+
+class ItemRecebido(models.Model):
+    recebimento = models.ForeignKey(Recebimento, on_delete=models.CASCADE, related_name="itens_recebidos")
+    material = models.ForeignKey(Material, on_delete=models.PROTECT)
+    quantidade_contada = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    def __str__(self):
+        return f"{self.quantidade_contada} x {self.material.codigo_interno} no recebimento {self.recebimento.id}"
+
+    class Meta:
+        verbose_name = "Item Recebido"
+        verbose_name_plural = "Itens Recebidos"
