@@ -43,6 +43,9 @@ INSTALLED_APPS = [
     # Meus Apps
     'core',
 
+    # Apps de Terceiros
+    'rest_framework',
+
     # Apps Nativos do Django
     'django.contrib.admin',
     'django.contrib.auth',

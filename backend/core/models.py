@@ -124,6 +124,62 @@ class Recebimento(BaseModel):
         verbose_name = "Recebimento Físico"
         verbose_name_plural = "Recebimentos Físicos"
 
+    def realizar_conciliacao(self):
+        """
+        Este método compara os itens do plano, da nota fiscal e do recebimento físico
+        para encontrar divergências.
+        """
+        from .models import Material # Importação local para evitar importação circular
+
+        # 1. Agrupar os dados de cada fonte por material.
+        itens_plano = {item.material.id: item.quantidade_prevista for item in self.plano_compra.itens.all()}
+        itens_nf = {item.material.id: item.quantidade for item in self.nota_fiscal.itens_nf.all()}
+        itens_recebidos = {item.material.id: item.quantidade_contada for item in self.itens_recebidos.all()}
+
+        # 2. Obter a lista de todos os materiais únicos e buscar seus objetos.
+        todos_materiais_ids = set(itens_plano.keys()) | set(itens_nf.keys()) | set(itens_recebidos.keys())
+        materiais_obj = {m.id: m for m in Material.objects.filter(id__in=todos_materiais_ids)}
+
+        # 3. Iterar sobre cada material e comparar as quantidades.
+        resultado_conciliacao = []
+        for material_id in todos_materiais_ids:
+            material = materiais_obj.get(material_id)
+            
+            # Usamos .get(chave, 0) para retornar 0 se o material não existir em uma das fontes.
+            qtd_plano = itens_plano.get(material_id, 0)
+            qtd_nf = itens_nf.get(material_id, 0)
+            qtd_recebida = itens_recebidos.get(material_id, 0)
+
+            # Se tudo bate, não há divergência para este item.
+            if qtd_plano == qtd_nf == qtd_recebida:
+                continue # Pula para o próximo material
+
+            # Se chegamos aqui, há uma divergência. Vamos registrá-la.
+            divergencia = {
+                'material_codigo': material.codigo_interno,
+                'material_descricao': material.descricao,
+                'qtd_plano': qtd_plano,
+                'qtd_nf': qtd_nf,
+                'qtd_recebida': qtd_recebida,
+                'tipo_divergencia': [] # Uma lista para armazenar os problemas
+            }
+
+            # Lógica para identificar os tipos de divergência
+            if qtd_recebida > qtd_nf:
+                divergencia['tipo_divergencia'].append('Recebido a mais que a NF')
+            elif qtd_recebida < qtd_nf:
+                divergencia['tipo_divergencia'].append('Recebido a menos que a NF')
+
+            if qtd_nf != qtd_plano:
+                divergencia['tipo_divergencia'].append('NF diferente do Plano de Compra')
+            
+            if qtd_recebida > 0 and qtd_plano == 0:
+                 divergencia['tipo_divergencia'].append('Item não consta no Plano de Compra')
+
+            resultado_conciliacao.append(divergencia)
+
+        return resultado_conciliacao
+
 class ItemRecebido(models.Model):
     recebimento = models.ForeignKey(Recebimento, on_delete=models.CASCADE, related_name="itens_recebidos")
     material = models.ForeignKey(Material, on_delete=models.PROTECT)
