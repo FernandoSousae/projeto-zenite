@@ -1,6 +1,6 @@
 # backend/core/serializers.py
 from rest_framework import serializers
-from .models import PlanoCompra, ItemPlanoCompra, Material
+from .models import PlanoCompra, ItemPlanoCompra, Material, Fornecedor
 
 # 1. Criamos um serializer para os Itens
 class ItemPlanoCompraSerializer(serializers.ModelSerializer):
@@ -20,3 +20,8 @@ class PlanoCompraSerializer(serializers.ModelSerializer):
         model = PlanoCompra
         # É uma boa prática listar os campos explicitamente
         fields = ['id', 'codigo_plano', 'fornecedor', 'data_emissao', 'data_prevista_entrega', 'status', 'usuario_criador', 'created_at', 'updated_at', 'itens']
+
+class FornecedorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Fornecedor
+        fields = ['id', 'razao_social', 'nome_fantasia', 'cnpj']

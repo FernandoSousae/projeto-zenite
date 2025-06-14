@@ -9,6 +9,7 @@ import PlanoCompraList from './pages/PlanoCompraList'; // Nossa lista de planos
 
 import PlanoCompraDetail from './pages/PlanoCompraDetail';
 import LoginPage from './pages/LoginPage';
+import FornecedorList from './pages/FornecedorList';
 
 function App() {
   return (
@@ -35,6 +36,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <PlanoCompraDetail />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/fornecedores" 
+            element={
+              <ProtectedRoute>
+                <FornecedorList />
               </ProtectedRoute>
             } 
           />

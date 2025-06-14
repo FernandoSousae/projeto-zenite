@@ -18,6 +18,9 @@ function NavBar() {
         <Button color="inherit" component={Link} to="/planos-compra">
           Planos de Compra
         </Button>
+        <Button color="inherit" component={Link} to="/fornecedores">
+            Fornecedores
+        </Button>
 
         {/* Lógica condicional: mostra Logout ou Login */}
         {token ? (

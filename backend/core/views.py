@@ -29,8 +29,8 @@ def conciliar_recebimento(request, recebimento_id):
     
 # Adicione ao final de core/views.py
 from rest_framework import viewsets
-from .models import PlanoCompra
-from .serializers import PlanoCompraSerializer
+from .models import PlanoCompra, Fornecedor
+from .serializers import PlanoCompraSerializer, FornecedorSerializer
 
 class PlanoCompraViewSet(viewsets.ModelViewSet):
     """
@@ -38,3 +38,7 @@ class PlanoCompraViewSet(viewsets.ModelViewSet):
     """
     queryset = PlanoCompra.objects.all().order_by('-data_emissao')
     serializer_class = PlanoCompraSerializer
+
+class FornecedorViewSet(viewsets.ModelViewSet):
+    queryset = Fornecedor.objects.all().order_by('nome_fantasia')
+    serializer_class = FornecedorSerializer
