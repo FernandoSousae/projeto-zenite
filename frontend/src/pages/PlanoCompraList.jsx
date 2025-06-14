@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Typography, List, ListItem, ListItemText, Paper } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 
 function PlanoCompraList() {
   // Toda a lógica de estado e busca de dados agora vive aqui.
@@ -27,12 +28,18 @@ function PlanoCompraList() {
       </Typography>
       <List>
         {planos.map(plano => (
-          <ListItem key={plano.id} divider>
-            <ListItemText 
-              primary={`Plano: ${plano.codigo_plano}`} 
-              secondary={`Status: ${plano.status}`} 
-            />
-          </ListItem>
+        <ListItem 
+            key={plano.id} 
+               divider
+               button // Faz o item parecer clicável
+               component={RouterLink} // Diz ao MUI para se comportar como um Link do Router
+               to={`/planos-compra/${plano.id}`} // O destino do link
+            >
+               <ListItemText 
+                   primary={`Plano: ${plano.codigo_plano}`} 
+                   secondary={`Status: ${plano.status}`} 
+               />
+        </ListItem>
         ))}
       </List>
     </Paper>

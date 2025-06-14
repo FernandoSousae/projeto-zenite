@@ -1,6 +1,7 @@
 # core/urls.py
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from rest_framework.authtoken.views import obtain_auth_token
 from . import views
 
 # Cria um roteador
@@ -13,4 +14,5 @@ router.register(r'planos-compra', views.PlanoCompraViewSet, basename='planocompr
 urlpatterns = [
     path('', include(router.urls)),
     path('recebimentos/<int:recebimento_id>/conciliar/', views.conciliar_recebimento, name='conciliar-recebimento'),
+    path('api-token-auth/', obtain_auth_token, name='api_token_auth'), 
 ]

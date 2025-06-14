@@ -1,3 +1,4 @@
+import ProtectedRoute from './components/ProtectedRoute';
 // frontend/src/App.jsx
 import { CssBaseline } from '@mui/material';
 import { Routes, Route } from 'react-router-dom'; // Imports para o roteamento
@@ -6,17 +7,37 @@ import NavBar from './components/NavBar'; // Nossa barra de navegação
 import HomePage from './pages/HomePage'; // Nossa página inicial
 import PlanoCompraList from './pages/PlanoCompraList'; // Nossa lista de planos
 
+import PlanoCompraDetail from './pages/PlanoCompraDetail';
+import LoginPage from './pages/LoginPage';
+
 function App() {
   return (
     <>
       <CssBaseline />
-      <NavBar /> {/* A barra de navegação agora aparece em todas as páginas */}
+      <NavBar />
       <main>
-        {/* O componente Routes define a área onde o conteúdo da página mudará */}
         <Routes>
-          {/* Cada Route mapeia um caminho (URL) para um componente */}
+          {/* Rotas Públicas */}
           <Route path="/" element={<HomePage />} />
-          <Route path="/planos-compra" element={<PlanoCompraList />} />
+          <Route path="/login" element={<LoginPage />} />
+
+          {/* Rotas Protegidas */}
+          <Route 
+            path="/planos-compra" 
+            element={
+              <ProtectedRoute>
+                <PlanoCompraList />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/planos-compra/:id" 
+            element={
+              <ProtectedRoute>
+                <PlanoCompraDetail />
+              </ProtectedRoute>
+            } 
+          />
         </Routes>
       </main>
     </>
