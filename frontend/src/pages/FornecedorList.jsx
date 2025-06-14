@@ -1,8 +1,8 @@
-// frontend/src/pages/FornecedorList.jsx
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Typography, List, ListItem, ListItemText, Paper, CircularProgress, Alert } from '@mui/material';
+import { Typography, List, ListItem, ListItemText, Paper, CircularProgress, Alert, Box, Button } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 
 function FornecedorList() {
   // 1. Nossos três estados: dados, carregamento e erro
@@ -42,9 +42,18 @@ function FornecedorList() {
   // 4. Renderização principal com tratamento de lista vazia
   return (
     <Paper elevation={3} sx={{ mt: 4, p: 2 }}>
-      <Typography variant="h5" component="h2" gutterBottom>
-        Lista de Fornecedores
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h5" component="h2">
+          Lista de Fornecedores
+        </Typography>
+        <Button
+          variant="contained"
+          component={RouterLink}
+          to="/fornecedores/novo"
+        >
+          Novo Fornecedor
+        </Button>
+      </Box>
 
       {fornecedores.length === 0 ? (
         // Mensagem customizada para lista vazia

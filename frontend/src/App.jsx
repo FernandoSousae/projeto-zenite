@@ -10,6 +10,7 @@ import PlanoCompraList from './pages/PlanoCompraList'; // Nossa lista de planos
 import PlanoCompraDetail from './pages/PlanoCompraDetail';
 import LoginPage from './pages/LoginPage';
 import FornecedorList from './pages/FornecedorList';
+import FornecedorCreate from './pages/FornecedorCreate';
 
 function App() {
   return (
@@ -46,6 +47,15 @@ function App() {
                 <FornecedorList />
               </ProtectedRoute>
             } 
+          />
+          <Route 
+            path="/fornecedores" 
+            element={<ProtectedRoute><FornecedorList /></ProtectedRoute>} 
+          />
+          {/* Adicione esta nova rota protegida */}
+          <Route 
+            path="/fornecedores/novo" 
+            element={<ProtectedRoute><FornecedorCreate /></ProtectedRoute>} 
           />
         </Routes>
       </main>
