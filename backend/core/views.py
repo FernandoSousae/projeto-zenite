@@ -1,9 +1,13 @@
-# core/views.py
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.models import Token
 
+from rest_framework import permissions
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Recebimento
+from .permissions import IsInGroup
+from .serializers import UserSerializer
 
 @api_view(['GET']) # Este decorator diz que esta view só aceita requisições do tipo GET
 def conciliar_recebimento(request, recebimento_id):
@@ -42,3 +46,20 @@ class PlanoCompraViewSet(viewsets.ModelViewSet):
 class FornecedorViewSet(viewsets.ModelViewSet):
     queryset = Fornecedor.objects.all().order_by('nome_fantasia')
     serializer_class = FornecedorSerializer
+    permission_classes = [permissions.IsAuthenticated, IsInGroup('Administrador', 'Analista')]
+
+class CustomLoginView(ObtainAuthToken):
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data,
+                                           context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        token, created = Token.objects.get_or_create(user=user)
+
+        # Serializamos os dados do usuário para incluir na resposta
+        user_serializer = UserSerializer(user)
+
+        return Response({
+            'token': token.key,
+            'user': user_serializer.data
+        })

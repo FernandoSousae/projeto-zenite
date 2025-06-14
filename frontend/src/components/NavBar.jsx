@@ -4,7 +4,8 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 function NavBar() {
-  const { token, logout } = useAuth();
+  const { user, logout } = useAuth();
+  const isAdminOrAnalyst = user?.groups?.includes('Administrador') || user?.groups?.includes('Analista');
 
   return (
     <AppBar position="static">
@@ -14,18 +15,20 @@ function NavBar() {
             Zênite
           </Button>
         </Typography>
-
+        
         <Button color="inherit" component={Link} to="/planos-compra">
           Planos de Compra
         </Button>
-        <Button color="inherit" component={Link} to="/fornecedores">
-            Fornecedores
-        </Button>
 
-        {/* Lógica condicional: mostra Logout ou Login */}
-        {token ? (
+        {isAdminOrAnalyst && (
+          <Button color="inherit" component={Link} to="/fornecedores">
+            Fornecedores
+          </Button>
+        )}
+
+        {user ? (
           <Button color="inherit" onClick={logout}>
-            Logout
+            Logout ({user.username})
           </Button>
         ) : (
           <Button color="inherit" component={Link} to="/login">
@@ -36,5 +39,4 @@ function NavBar() {
     </AppBar>
   );
 }
-
 export default NavBar;

@@ -1,4 +1,5 @@
 # backend/core/serializers.py
+from django.contrib.auth.models import User
 from rest_framework import serializers
 from .models import PlanoCompra, ItemPlanoCompra, Material, Fornecedor
 
@@ -25,3 +26,15 @@ class FornecedorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Fornecedor
         fields = ['id', 'razao_social', 'nome_fantasia', 'cnpj']
+
+class UserSerializer(serializers.ModelSerializer):
+    # Vamos buscar os nomes dos grupos aos quais o usuário pertence
+    groups = serializers.SlugRelatedField(
+        many=True,
+        read_only=True,
+        slug_field='name'
+    )
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'groups']
