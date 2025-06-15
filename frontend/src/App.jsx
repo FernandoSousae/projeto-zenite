@@ -11,6 +11,8 @@ import PlanoCompraDetail from './pages/PlanoCompraDetail';
 import LoginPage from './pages/LoginPage';
 import FornecedorList from './pages/FornecedorList';
 import FornecedorCreate from './pages/FornecedorCreate';
+import RecebimentoList from './pages/RecebimentoList';
+import RecebimentoCreate from './pages/RecebimentoCreate';
 
 function App() {
   return (
@@ -57,6 +59,17 @@ function App() {
             path="/fornecedores/novo" 
             element={<ProtectedRoute><FornecedorCreate /></ProtectedRoute>} 
           />
+
+          <Route 
+            path="/recebimentos" 
+            element={<ProtectedRoute><RecebimentoList /></ProtectedRoute>} 
+          />
+
+          <Route 
+            path="/recebimentos/novo" 
+            element={<ProtectedRoute><RecebimentoCreate /></ProtectedRoute>} 
+          />
+          
         </Routes>
       </main>
     </>

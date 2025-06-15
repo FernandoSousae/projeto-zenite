@@ -8,6 +8,8 @@ router = DefaultRouter()
 # Registra nosso ViewSet com o roteador, definindo o prefixo da URL
 router.register(r'planos-compra', views.PlanoCompraViewSet, basename='planocompra')
 router.register(r'fornecedores', views.FornecedorViewSet, basename='fornecedor')
+router.register(r'notas-fiscais', views.NotaFiscalViewSet, basename='notafiscal')
+router.register(r'recebimentos', views.RecebimentoViewSet, basename='recebimento')
 
 # Nossas URLs agora são compostas pelas rotas geradas pelo roteador
 # e pelo nosso endpoint customizado que já existia.

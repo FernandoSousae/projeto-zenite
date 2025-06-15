@@ -8,6 +8,8 @@ from rest_framework import status
 from .models import Recebimento
 from .permissions import IsInGroup
 from .serializers import UserSerializer
+from .models import NotaFiscal, Recebimento
+from .serializers import NotaFiscalSerializer, RecebimentoSerializer
 
 @api_view(['GET']) # Este decorator diz que esta view só aceita requisições do tipo GET
 def conciliar_recebimento(request, recebimento_id):
@@ -63,3 +65,18 @@ class CustomLoginView(ObtainAuthToken):
             'token': token.key,
             'user': user_serializer.data
         })
+
+class NotaFiscalViewSet(viewsets.ModelViewSet):
+    queryset = NotaFiscal.objects.all().order_by('-data_emissao')
+    serializer_class = NotaFiscalSerializer
+    permission_classes = [permissions.IsAuthenticated, IsInGroup('Administrador', 'Analista')]
+
+class RecebimentoViewSet(viewsets.ModelViewSet):
+    queryset = Recebimento.objects.all().order_by('-data_recebimento')
+    serializer_class = RecebimentoSerializer
+    # Vamos permitir que Conferentes e papéis superiores acessem
+    permission_classes = [permissions.IsAuthenticated, IsInGroup('Administrador', 'Analista', 'Revisor', 'Conferente')]
+
+    def perform_create(self, serializer):
+        """Salva o recebimento associando o usuário logado como o conferente."""
+        serializer.save(conferente=self.request.user)

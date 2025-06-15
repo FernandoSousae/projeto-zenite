@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 function NavBar() {
   const { user, logout } = useAuth();
   const isAdminOrAnalyst = user?.groups?.includes('Administrador') || user?.groups?.includes('Analista');
+  const canViewRecebimentos = user?.groups?.some(r => ['Administrador', 'Analista', 'Revisor', 'Conferente'].includes(r));
 
   return (
     <AppBar position="static">
@@ -24,6 +25,12 @@ function NavBar() {
           <Button color="inherit" component={Link} to="/fornecedores">
             Fornecedores
           </Button>
+        )}
+
+        {canViewRecebimentos && (
+            <Button color="inherit" component={Link} to="/recebimentos">
+                Recebimentos
+            </Button>
         )}
 
         {user ? (
