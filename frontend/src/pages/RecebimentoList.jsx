@@ -46,7 +46,12 @@ function RecebimentoList() {
       ) : (
         <List>
           {recebimentos.map(recebimento => (
-            <ListItem key={recebimento.id} divider>
+            <ListItem  key={recebimento.id} 
+              divider
+              button 
+              component={RouterLink} 
+              to={`/recebimentos/${recebimento.id}`}
+            >
               <ListItemText 
                 primary={`Recebimento ID: ${recebimento.id} - Plano: ${recebimento.plano_compra}`}
                 secondary={`Data: ${new Date(recebimento.data_recebimento).toLocaleString()}`}

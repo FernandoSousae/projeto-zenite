@@ -10,6 +10,8 @@ router.register(r'planos-compra', views.PlanoCompraViewSet, basename='planocompr
 router.register(r'fornecedores', views.FornecedorViewSet, basename='fornecedor')
 router.register(r'notas-fiscais', views.NotaFiscalViewSet, basename='notafiscal')
 router.register(r'recebimentos', views.RecebimentoViewSet, basename='recebimento')
+router.register(r'defeitos', views.DefeitoViewSet, basename='defeito')
+router.register(r'inspecoes-qualidade', views.InspecaoQualidadeViewSet, basename='inspecaoqualidade')
 
 # Nossas URLs agora são compostas pelas rotas geradas pelo roteador
 # e pelo nosso endpoint customizado que já existia.

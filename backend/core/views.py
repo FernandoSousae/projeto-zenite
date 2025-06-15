@@ -1,15 +1,14 @@
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
-
 from rest_framework import permissions
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.decorators import action
 from rest_framework import status
-from .models import Recebimento
+
 from .permissions import IsInGroup
-from .serializers import UserSerializer
-from .models import NotaFiscal, Recebimento
-from .serializers import NotaFiscalSerializer, RecebimentoSerializer
+from .models import NotaFiscal, Recebimento, ItemRecebido, Material, Defeito, InspecaoQualidade
+from .serializers import NotaFiscalSerializer, RecebimentoSerializer, UserSerializer, ItemRecebidoCreateSerializer, DefeitoSerializer, InspecaoQualidadeSerializer
 
 @api_view(['GET']) # Este decorator diz que esta view só aceita requisições do tipo GET
 def conciliar_recebimento(request, recebimento_id):
@@ -80,3 +79,44 @@ class RecebimentoViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Salva o recebimento associando o usuário logado como o conferente."""
         serializer.save(conferente=self.request.user)
+
+    @action(detail=True, methods=['post'])
+    def adicionar_item(self, request, pk=None):
+        """Ação para adicionar um item contado a um recebimento existente."""
+        recebimento = self.get_object()
+        serializer = ItemRecebidoCreateSerializer(data=request.data)
+
+        if serializer.is_valid():
+            material_id = serializer.validated_data['material_id']
+            quantidade = serializer.validated_data['quantidade_contada']
+
+            try:
+                material = Material.objects.get(id=material_id)
+                # Cria o novo item e o associa a este recebimento
+                ItemRecebido.objects.create(
+                    recebimento=recebimento,
+                    material=material,
+                    quantidade_contada=quantidade
+                )
+                return Response({'status': 'item adicionado'}, status=status.HTTP_201_CREATED)
+            except Material.DoesNotExist:
+                return Response({'error': 'Material não encontrado'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DefeitoViewSet(viewsets.ModelViewSet):
+    """ API para visualizar e gerenciar os tipos de defeito. """
+    queryset = Defeito.objects.all().order_by('nome')
+    serializer_class = DefeitoSerializer
+    permission_classes = [permissions.IsAuthenticated, IsInGroup('Administrador')]
+
+
+class InspecaoQualidadeViewSet(viewsets.ModelViewSet):
+    """ API para visualizar e gerenciar as Inspeções de Qualidade. """
+    queryset = InspecaoQualidade.objects.all().order_by('-created_at')
+    serializer_class = InspecaoQualidadeSerializer
+    permission_classes = [permissions.IsAuthenticated, IsInGroup('Administrador', 'Analista', 'Revisor')]
+
+    def perform_create(self, serializer):
+        """ Associa o usuário logado como o revisor da inspeção. """
+        serializer.save(revisor=self.request.user)

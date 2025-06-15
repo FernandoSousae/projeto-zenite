@@ -1,7 +1,7 @@
 # backend/core/serializers.py
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Fornecedor, NotaFiscal, ItemNotaFiscal, Recebimento, ItemRecebido, Material, PlanoCompra, ItemPlanoCompra
+from .models import Fornecedor, NotaFiscal, ItemNotaFiscal, Recebimento, ItemRecebido, Material, PlanoCompra, ItemPlanoCompra, Defeito, InspecaoQualidade
 
 
 # 1. Criamos um serializer para os Itens
@@ -59,7 +59,61 @@ class ItemRecebidoSerializer(serializers.ModelSerializer):
         fields = ['id', 'material', 'material_descricao', 'quantidade_contada']
 
 class RecebimentoSerializer(serializers.ModelSerializer):
+    # Usando outros serializers para aninhar os dados completos
+    plano_compra = PlanoCompraSerializer(read_only=True)
+    nota_fiscal = NotaFiscalSerializer(read_only=True)
     itens_recebidos = ItemRecebidoSerializer(many=True, read_only=True)
+    conferente_username = serializers.CharField(source='conferente.username', read_only=True)
+
+    # Campos para receber os IDs na criação (writable)
+    plano_compra_id = serializers.PrimaryKeyRelatedField(
+        queryset=PlanoCompra.objects.all(), source='plano_compra', write_only=True
+    )
+    nota_fiscal_id = serializers.PrimaryKeyRelatedField(
+        queryset=NotaFiscal.objects.all(), source='nota_fiscal', write_only=True
+    )
+
     class Meta:
         model = Recebimento
-        fields = ['id', 'plano_compra', 'nota_fiscal', 'conferente', 'data_recebimento', 'observacoes', 'itens_recebidos']
+        fields = [
+            'id', 
+            'plano_compra', 'plano_compra_id',  # plano_compra para leitura, _id para escrita
+            'nota_fiscal', 'nota_fiscal_id',   # nota_fiscal para leitura, _id para escrita
+            'conferente_username', 
+            'data_recebimento', 
+            'observacoes', 
+            'itens_recebidos'
+        ]
+
+class ItemRecebidoCreateSerializer(serializers.Serializer):
+    material_id = serializers.IntegerField()
+    quantidade_contada = serializers.DecimalField(max_digits=10, decimal_places=2)
+
+class DefeitoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Defeito
+        fields = ['id', 'nome', 'descricao']
+
+
+class InspecaoQualidadeSerializer(serializers.ModelSerializer):
+    # Campos que são apenas para leitura (mostrados, mas não esperados na criação)
+    revisor_username = serializers.CharField(source='revisor.username', read_only=True)
+    recebimento_id = serializers.IntegerField(source='recebimento.id', read_only=True)
+
+    # Campo que será usado para criar/associar o recebimento
+    recebimento = serializers.PrimaryKeyRelatedField(
+        queryset=Recebimento.objects.all(), write_only=True
+    )
+
+    class Meta:
+        model = InspecaoQualidade
+        fields = [
+            'id', 
+            'recebimento', # Campo de escrita (write-only)
+            'recebimento_id', # Campo de leitura (read-only)
+            'revisor_username', # Campo de leitura (read-only)
+            'status', 
+            'observacoes_gerais', 
+            'created_at'
+        ]
+        read_only_fields = ['revisor_username']

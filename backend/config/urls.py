@@ -14,12 +14,18 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-# config/urls.py
 from django.contrib import admin
-from django.urls import path, include # Adicione 'include' aqui
+from django.urls import path, include
 
 urlpatterns = [
+    # A rota para a área administrativa do Django
     path('admin/', admin.site.urls),
-    # Adicione esta linha para conectar as URLs do app core
+
+    # A rota que direciona para as URLs do nosso app 'core'
+    # (ex: /api/fornecedores/, /api/planos-compra/)
     path('api/', include('core.urls')),
+
+    # A NOVA LINHA: cria as páginas de login e logout que a
+    # interface web da API (Browsable API) precisa para funcionar.
+    path('api-auth/', include('rest_framework.urls')),
 ]

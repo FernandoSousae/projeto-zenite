@@ -1,9 +1,8 @@
-# core/admin.py
-
 from django.contrib import admin
 from .models import (
     Fornecedor, Material, PlanoCompra, ItemPlanoCompra,
-    NotaFiscal, ItemNotaFiscal, Recebimento, ItemRecebido
+    NotaFiscal, ItemNotaFiscal, Recebimento, ItemRecebido,
+    Defeito, InspecaoQualidade, ItemInspecionadoDefeito
 )
 
 # -----------------------------------------------------------------------------
@@ -57,3 +56,24 @@ class MaterialAdmin(admin.ModelAdmin):
     search_fields = ('codigo_interno', 'descricao')
     list_display = ('codigo_interno', 'descricao', 'unidade_medida')
     list_filter = ('unidade_medida',)
+
+# --- Configuração CORRIGIDA para o Módulo de Qualidade ---
+
+@admin.register(Defeito)
+class DefeitoAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'descricao', 'created_at')
+    search_fields = ('nome',)
+
+@admin.register(InspecaoQualidade)
+class InspecaoQualidadeAdmin(admin.ModelAdmin):
+    # A linha 'inlines' foi REMOVIDA daqui, pois causava o erro.
+    list_display = ('id', 'recebimento', 'revisor', 'status', 'created_at')
+    list_filter = ('status', 'revisor')
+    search_fields = ('recebimento__id',)
+
+# A classe ItemInspecionadoDefeitoInline foi REMOVIDA.
+# Em seu lugar, registramos o modelo de forma independente.
+@admin.register(ItemInspecionadoDefeito)
+class ItemInspecionadoDefeitoAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'item_recebido', 'defeito', 'quantidade_defeituosa')
+    list_filter = ('defeito',)

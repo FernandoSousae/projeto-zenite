@@ -191,3 +191,50 @@ class ItemRecebido(models.Model):
     class Meta:
         verbose_name = "Item Recebido"
         verbose_name_plural = "Itens Recebidos"
+
+class Defeito(BaseModel):
+    """ Um catálogo dos possíveis tipos de defeito que podem ser encontrados. """
+    nome = models.CharField(max_length=100, unique=True, verbose_name="Nome do Defeito")
+    descricao = models.TextField(blank=True, null=True, verbose_name="Descrição do Defeito")
+
+    def __str__(self):
+        return self.nome
+
+    class Meta:
+        verbose_name = "Defeito"
+        verbose_name_plural = "Defeitos"
+
+
+class InspecaoQualidade(BaseModel):
+    """ O cabeçalho de uma inspeção de qualidade para um recebimento. """
+    STATUS_CHOICES = [
+        ('Pendente', 'Pendente'),
+        ('Aprovado', 'Aprovado'),
+        ('Reprovado', 'Reprovado'),
+        ('Aprovado com Ressalvas', 'Aprovado com Ressalvas'),
+    ]
+    recebimento = models.OneToOneField(Recebimento, on_delete=models.CASCADE, verbose_name="Recebimento Inspecionado")
+    revisor = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Revisor Responsável")
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='Pendente')
+    observacoes_gerais = models.TextField(blank=True, null=True, verbose_name="Observações Gerais da Inspeção")
+
+    def __str__(self):
+        return f"Inspeção do Recebimento ID {self.recebimento.id} - Status: {self.status}"
+
+    class Meta:
+        verbose_name = "Inspeção de Qualidade"
+        verbose_name_plural = "Inspeções de Qualidade"
+
+
+class ItemInspecionadoDefeito(BaseModel):
+    """ Registra um defeito específico encontrado em um item de um recebimento. """
+    item_recebido = models.ForeignKey(ItemRecebido, on_delete=models.CASCADE, related_name="defeitos_encontrados")
+    defeito = models.ForeignKey(Defeito, on_delete=models.PROTECT, verbose_name="Defeito Apontado")
+    quantidade_defeituosa = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Quantidade com Defeito")
+
+    def __str__(self):
+        return f"{self.quantidade_defeituosa} x {self.item_recebido.material.codigo_interno} com defeito de '{self.defeito.nome}'"
+
+    class Meta:
+        verbose_name = "Defeito de Item Inspecionado"
+        verbose_name_plural = "Defeitos de Itens Inspecionados"
