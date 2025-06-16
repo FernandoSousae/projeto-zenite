@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
+import axios from 'axios';
 import { 
     Typography, Paper, Box, CircularProgress, Alert, Grid, 
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
     FormControl, Select, MenuItem, InputLabel, TextField, Button 
 } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+
+
 function RecebimentoDetail() {
     const { id } = useParams();
+    const { auth } = useAuth();
     const navigate = useNavigate();
     const { user } = useAuth(); 
     const [recebimento, setRecebimento] = useState(null);
@@ -69,16 +71,27 @@ function RecebimentoDetail() {
 
     const handleIniciarInspecao = async () => {
         try {
-            const response = await axios.post(`http://127.0.0.1:8000/api/inspecoes-qualidade/`, {
-                recebimento_id: id // A chave DEVE corresponder ao campo de escrita no serializer
-            });
-            const novaInspecaoId = response.data.id;
-                navigate(`/inspecoes/${novaInspecaoId}`);
+            // 1. Usa 'axios.post' em vez de 'api.post'
+            const response = await axios.post(
+                `/api/recebimentos/${id}/iniciar_inspecao/`,
+                {}, // axios.post precisa de um corpo (body), mesmo que vazio
+                {   // 2. Adiciona o cabeçalho de autorização manualmente
+                    headers: {
+                        'Authorization': `Bearer ${auth.accessToken}`
+                    }
+                }
+            );
+
+            const novaInspecao = response.data;
+            console.log("Inspeção criada com sucesso:", novaInspecao);
+
+            navigate(`/inspecoes/${novaInspecao.id}`);
+
         } catch (error) {
-            console.error("Erro ao iniciar inspeção", error);
-            setError("Não foi possível iniciar a inspeção. Verifique suas permissões.");
+            console.error("Erro ao iniciar inspeção:", error.response?.data || error.message);
+            alert(`Não foi possível iniciar a inspeção. Erro: ${error.response?.data?.error || 'Erro desconhecido.'}`);
         }
-        };
+    };
 
     if (loading) return <CircularProgress sx={{ display: 'block', margin: 'auto', mt: 8 }} />;
     if (error) return <Alert severity="error" sx={{ mt: 4 }}>{error}</Alert>;

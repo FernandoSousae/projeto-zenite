@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import { Typography, Paper, Box, CircularProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, TextField, Collapse } from '@mui/material';
+import { Typography, Paper, Box, CircularProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, TextField, Collapse, Grid } from '@mui/material';
+
 
 function InspecaoQualidadeDetail() {
   const { id } = useParams();
@@ -71,6 +72,7 @@ function InspecaoQualidadeDetail() {
   if (error) return <Alert severity="error">{error}</Alert>;
   if (!inspecao) return <Alert severity="info">Inspeção não encontrada.</Alert>;
 
+
   return (
     <Box sx={{ mt: 4, mb: 4 }}>
       {/* ... Cabeçalho da página ... (sem alterações) */}
@@ -88,7 +90,7 @@ function InspecaoQualidadeDetail() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {inspecao.recebimento.itens_recebidos.map((item) => (
+              {(inspecao?.recebimento?.itens_recebidos || []).map((item) => (
                 // 1. O Fragment agrupa as duas linhas para cada item
                 <React.Fragment key={item.id}>
                   {/* 2. A linha principal que agora é clicável */}

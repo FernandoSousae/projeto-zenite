@@ -5,6 +5,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 
 from .permissions import IsInGroup
 from .models import NotaFiscal, Recebimento, ItemRecebido, Material, Defeito, InspecaoQualidade, ItemInspecionadoDefeito
@@ -74,7 +75,7 @@ class RecebimentoViewSet(viewsets.ModelViewSet):
     queryset = Recebimento.objects.all().order_by('-data_recebimento')
     serializer_class = RecebimentoSerializer
     # Vamos permitir que Conferentes e papéis superiores acessem
-    permission_classes = [permissions.IsAuthenticated, IsInGroup('Administrador', 'Analista', 'Revisor', 'Conferente')]
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         """Salva o recebimento associando o usuário logado como o conferente."""
@@ -103,6 +104,34 @@ class RecebimentoViewSet(viewsets.ModelViewSet):
                 return Response({'error': 'Material não encontrado'}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def iniciar_inspecao(self, request, pk=None):
+        """
+        Cria uma nova inspeção de qualidade para um recebimento específico.
+        """
+        # Pega o objeto do recebimento usando a chave primária (pk) da URL
+        recebimento = self.get_object()
+
+        # 1. Verifica se já não existe uma inspeção para este recebimento
+        # O related_name 'inspecao' que definimos no modelo nos ajuda aqui
+        if hasattr(recebimento, 'inspecao'):
+            return Response(
+                {'error': 'Este recebimento já possui uma inspeção associada.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 2. Cria a nova inspeção
+        # O revisor será o usuário que fez a requisição
+        nova_inspecao = InspecaoQualidade.objects.create(
+            recebimento=recebimento,
+            revisor=request.user,
+            status='PENDENTE' # Define um status inicial
+        )
+
+        # 3. Prepara a resposta com os dados da inspeção criada
+        serializer = InspecaoQualidadeSerializer(nova_inspecao)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class DefeitoViewSet(viewsets.ModelViewSet):
     """ API para visualizar e gerenciar os tipos de defeito. """
