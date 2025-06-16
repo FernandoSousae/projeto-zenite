@@ -14,6 +14,7 @@ import FornecedorCreate from './pages/FornecedorCreate';
 import RecebimentoList from './pages/RecebimentoList';
 import RecebimentoCreate from './pages/RecebimentoCreate';
 import RecebimentoDetail from './pages/RecebimentoDetail';
+import InspecaoQualidadeDetail from './pages/InspecaoQualidadeDetail';
 
 function App() {
   return (
@@ -74,6 +75,11 @@ function App() {
           <Route 
             path="/recebimentos/:id" 
             element={<ProtectedRoute><RecebimentoDetail /></ProtectedRoute>} 
+          />
+
+          <Route 
+            path="/inspecoes/:id" 
+            element={<ProtectedRoute><InspecaoQualidadeDetail /></ProtectedRoute>} 
           />
           
         </Routes>

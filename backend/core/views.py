@@ -7,8 +7,8 @@ from rest_framework.decorators import action
 from rest_framework import status
 
 from .permissions import IsInGroup
-from .models import NotaFiscal, Recebimento, ItemRecebido, Material, Defeito, InspecaoQualidade
-from .serializers import NotaFiscalSerializer, RecebimentoSerializer, UserSerializer, ItemRecebidoCreateSerializer, DefeitoSerializer, InspecaoQualidadeSerializer
+from .models import NotaFiscal, Recebimento, ItemRecebido, Material, Defeito, InspecaoQualidade, ItemInspecionadoDefeito
+from .serializers import NotaFiscalSerializer, RecebimentoSerializer, UserSerializer, DefeitoSerializer, InspecaoQualidadeSerializer, InspecaoQualidadeSerializer, RegistrarDefeitoSerializer
 
 @api_view(['GET']) # Este decorator diz que esta view só aceita requisições do tipo GET
 def conciliar_recebimento(request, recebimento_id):
@@ -120,3 +120,25 @@ class InspecaoQualidadeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """ Associa o usuário logado como o revisor da inspeção. """
         serializer.save(revisor=self.request.user)
+
+    @action(detail=True, methods=['post'])
+    def registrar_defeito(self, request, pk=None):
+        inspecao = self.get_object()
+        serializer = RegistrarDefeitoSerializer(data=request.data)
+
+        if serializer.is_valid():
+            data = serializer.validated_data
+            try:
+                item_recebido = ItemRecebido.objects.get(id=data['item_recebido_id'], recebimento=inspecao.recebimento)
+                defeito = Defeito.objects.get(id=data['defeito_id'])
+
+                ItemInspecionadoDefeito.objects.create(
+                    item_recebido=item_recebido,
+                    defeito=defeito,
+                    quantidade_defeituosa=data['quantidade_defeituosa']
+                )
+                return Response({'status': 'defeito registrado'}, status=status.HTTP_201_CREATED)
+            except (ItemRecebido.DoesNotExist, Defeito.DoesNotExist):
+                return Response({'error': 'Item ou Defeito inválido.'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

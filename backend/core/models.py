@@ -213,7 +213,7 @@ class InspecaoQualidade(BaseModel):
         ('Reprovado', 'Reprovado'),
         ('Aprovado com Ressalvas', 'Aprovado com Ressalvas'),
     ]
-    recebimento = models.OneToOneField(Recebimento, on_delete=models.CASCADE, verbose_name="Recebimento Inspecionado")
+    recebimento = models.OneToOneField(Recebimento, on_delete=models.CASCADE, verbose_name="Recebimento Inspecionado", related_name='inspecao')
     revisor = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Revisor Responsável")
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='Pendente')
     observacoes_gerais = models.TextField(blank=True, null=True, verbose_name="Observações Gerais da Inspeção")

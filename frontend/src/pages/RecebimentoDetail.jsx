@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 import { 
     Typography, Paper, Box, CircularProgress, Alert, Grid, 
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
     FormControl, Select, MenuItem, InputLabel, TextField, Button 
 } from '@mui/material';
-
+import { Link as RouterLink } from 'react-router-dom';
 function RecebimentoDetail() {
     const { id } = useParams();
+    const navigate = useNavigate();
+    const { user } = useAuth(); 
     const [recebimento, setRecebimento] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -18,10 +21,13 @@ function RecebimentoDetail() {
     const [selectedMaterial, setSelectedMaterial] = useState('');
     const [quantidadeContada, setQuantidadeContada] = useState('');
 
+    const isRevisor = user?.groups?.includes('Revisor') || user?.groups?.includes('Administrador');
+
     // Função para buscar/atualizar os dados do recebimento
     const fetchRecebimento = async () => {
         try {
             const response = await axios.get(`http://127.0.0.1:8000/api/recebimentos/${id}/`);
+            console.log("Dados do Recebimento recebidos da API:", response.data);
             setRecebimento(response.data);
         } catch (err) {
             console.error(err);
@@ -61,6 +67,19 @@ function RecebimentoDetail() {
         }
     };
 
+    const handleIniciarInspecao = async () => {
+        try {
+            const response = await axios.post(`http://127.0.0.1:8000/api/inspecoes-qualidade/`, {
+                recebimento_id: id // A chave DEVE corresponder ao campo de escrita no serializer
+            });
+            const novaInspecaoId = response.data.id;
+                navigate(`/inspecoes/${novaInspecaoId}`);
+        } catch (error) {
+            console.error("Erro ao iniciar inspeção", error);
+            setError("Não foi possível iniciar a inspeção. Verifique suas permissões.");
+        }
+        };
+
     if (loading) return <CircularProgress sx={{ display: 'block', margin: 'auto', mt: 8 }} />;
     if (error) return <Alert severity="error" sx={{ mt: 4 }}>{error}</Alert>;
     if (!recebimento) return <Alert severity="info">Recebimento não encontrado.</Alert>;
@@ -71,9 +90,27 @@ function RecebimentoDetail() {
                 <Typography variant="h4">
                     Recebimento ID: {recebimento.id}
                 </Typography>
-                <Button variant="contained" color="primary" onClick={handleConciliar}>
-                    Finalizar e Conciliar
-                </Button>
+
+                {/* Um container para nossos botões de ação */}
+                <Box>
+                    <Button variant="contained" color="secondary" onClick={handleConciliar}>
+                        Conciliar Quantidades
+                    </Button>
+
+                    {/* Lógica condicional: se for revisor E ainda não houver inspeção, mostra o botão */}
+                    {isRevisor && !recebimento.inspecao_id && (
+                        <Button variant="contained" color="primary" onClick={handleIniciarInspecao} sx={{ ml: 2 }}>
+                            Iniciar Inspeção de Qualidade
+                        </Button>
+                    )}
+
+                    {/* Se a inspeção já existir, mostra um link para ela */}
+                    {recebimento.inspecao_id && (
+                    <Button variant="outlined" component={RouterLink} to={`/inspecoes/${recebimento.inspecao_id}`} sx={{ ml: 2 }}>
+                        Ver Inspeção
+                    </Button>
+                    )}
+                </Box>
             </Paper>
 
             <Grid container spacing={4}>
