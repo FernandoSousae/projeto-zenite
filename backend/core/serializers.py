@@ -66,26 +66,33 @@ class ItemInspecionadoDefeitoSerializer(serializers.ModelSerializer):
 class ItemRecebidoSerializer(serializers.ModelSerializer):
     material_descricao = serializers.CharField(source='material.descricao', read_only=True)
     defeitos_encontrados = ItemInspecionadoDefeitoSerializer(many=True, read_only=True)
+
+    # CAMPO PARA ESCRITA (write)
+    material_id = serializers.IntegerField(write_only=True)
+
     class Meta:
         model = ItemRecebido
-        fields = ['id', 'material', 'material_descricao', 'quantidade_contada', 'defeitos_encontrados']
+        fields = ['id', 'material', 'material_descricao', 'quantidade_contada', 'defeitos_encontrados', 'material_id']
+        read_only_fields = ['material', 'defeitos_encontrados']
 
 
 class RecebimentoSerializer(serializers.ModelSerializer):
-    itens_recebidos = ItemRecebidoSerializer(many=True, read_only=True)
+    # --- CAMPOS PARA LEITURA (read_only) ---
     conferente_username = serializers.CharField(source='conferente.username', read_only=True)
     plano_compra = PlanoCompraSerializer(read_only=True)
     nota_fiscal = NotaFiscalSerializer(read_only=True)
-
-    # CAMPO CORRIGIDO E ESSENCIAL:
     inspecao_id = serializers.ReadOnlyField(source='inspecao.id')
+    itens_recebidos = ItemRecebidoSerializer(many=True, read_only=True)
 
+    # --- CAMPOS PARA ESCRITA (write_only) ---
     plano_compra_id = serializers.PrimaryKeyRelatedField(
         queryset=PlanoCompra.objects.all(), source='plano_compra', write_only=True
     )
     nota_fiscal_id = serializers.PrimaryKeyRelatedField(
-        queryset=NotaFiscal.objects.all(), source='nota_fiscal', write_only=True
+        queryset=NotaFiscal.objects.all(), source='nota_fiscal', write_only=True, required=False, allow_null=True
     )
+    # Este é o nosso novo campo para receber os itens do formulário
+    itens_a_receber = ItemRecebidoSerializer(many=True, write_only=True)
 
     class Meta:
         model = Recebimento
@@ -96,9 +103,28 @@ class RecebimentoSerializer(serializers.ModelSerializer):
             'conferente_username', 
             'data_recebimento', 
             'observacoes', 
-            'itens_recebidos',
-            'inspecao_id' # Garantir que está na lista de campos
+            'itens_recebidos',   # para ler
+            'itens_a_receber',   # para escrever
+            'inspecao_id'
         ]
+
+    def create(self, validated_data):
+        # Agora pegamos os itens do nosso novo campo 'itens_a_receber'
+        itens_data = validated_data.pop('itens_a_receber')
+
+        # Removemos os outros campos de escrita para passar para o create do Recebimento
+        validated_data.pop('plano_compra')
+        validated_data.pop('nota_fiscal', None) # Usamos .pop com default para o campo não obrigatório
+
+        # Criamos o recebimento
+        recebimento = Recebimento.objects.create(**validated_data, conferente=self.context['request'].user)
+
+        # Criamos os itens recebidos
+        for item_data in itens_data:
+            # O 'material_id' que definimos no ItemRecebidoSerializer será usado aqui
+            ItemRecebido.objects.create(recebimento=recebimento, **item_data)
+
+        return recebimento
 
 
 class DefeitoSerializer(serializers.ModelSerializer):

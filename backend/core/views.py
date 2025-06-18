@@ -4,12 +4,13 @@ from rest_framework import permissions
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import viewsets, status, serializers
+
 
 from .permissions import IsInGroup
-from .models import NotaFiscal, Recebimento, ItemRecebido, Material, Defeito, InspecaoQualidade, ItemInspecionadoDefeito
-from .serializers import NotaFiscalSerializer, RecebimentoSerializer, UserSerializer, DefeitoSerializer, InspecaoQualidadeSerializer, InspecaoQualidadeSerializer, RegistrarDefeitoSerializer
+from .models import NotaFiscal, Recebimento, ItemRecebido, Material, Defeito, InspecaoQualidade, ItemInspecionadoDefeito, PlanoCompra, Fornecedor
+from .serializers import NotaFiscalSerializer, RecebimentoSerializer, UserSerializer, DefeitoSerializer, InspecaoQualidadeSerializer, RegistrarDefeitoSerializer, PlanoCompraSerializer, FornecedorSerializer
 
 @api_view(['GET']) # Este decorator diz que esta view só aceita requisições do tipo GET
 def conciliar_recebimento(request, recebimento_id):
@@ -32,11 +33,7 @@ def conciliar_recebimento(request, recebimento_id):
             {"error": f"Recebimento com ID {recebimento_id} não encontrado."},
             status=status.HTTP_404_NOT_FOUND
         )
-    
-# Adicione ao final de core/views.py
-from rest_framework import viewsets
-from .models import PlanoCompra, Fornecedor
-from .serializers import PlanoCompraSerializer, FornecedorSerializer
+
 
 class PlanoCompraViewSet(viewsets.ModelViewSet):
     """
@@ -74,62 +71,27 @@ class NotaFiscalViewSet(viewsets.ModelViewSet):
 class RecebimentoViewSet(viewsets.ModelViewSet):
     queryset = Recebimento.objects.all().order_by('-data_recebimento')
     serializer_class = RecebimentoSerializer
-    # Vamos permitir que Conferentes e papéis superiores acessem
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         """Salva o recebimento associando o usuário logado como o conferente."""
         serializer.save(conferente=self.request.user)
 
-    @action(detail=True, methods=['post'])
-    def adicionar_item(self, request, pk=None):
-        """Ação para adicionar um item contado a um recebimento existente."""
-        recebimento = self.get_object()
-        serializer = ItemRecebidoCreateSerializer(data=request.data)
 
-        if serializer.is_valid():
-            material_id = serializer.validated_data['material_id']
-            quantidade = serializer.validated_data['quantidade_contada']
-
-            try:
-                material = Material.objects.get(id=material_id)
-                # Cria o novo item e o associa a este recebimento
-                ItemRecebido.objects.create(
-                    recebimento=recebimento,
-                    material=material,
-                    quantidade_contada=quantidade
-                )
-                return Response({'status': 'item adicionado'}, status=status.HTTP_201_CREATED)
-            except Material.DoesNotExist:
-                return Response({'error': 'Material não encontrado'}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def iniciar_inspecao(self, request, pk=None):
-        """
-        Cria uma nova inspeção de qualidade para um recebimento específico.
-        """
-        # Pega o objeto do recebimento usando a chave primária (pk) da URL
+        # ... (o método iniciar_inspecao continua aqui, sem alterações) ...
         recebimento = self.get_object()
-
-        # 1. Verifica se já não existe uma inspeção para este recebimento
-        # O related_name 'inspecao' que definimos no modelo nos ajuda aqui
         if hasattr(recebimento, 'inspecao'):
             return Response(
                 {'error': 'Este recebimento já possui uma inspeção associada.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
-        # 2. Cria a nova inspeção
-        # O revisor será o usuário que fez a requisição
         nova_inspecao = InspecaoQualidade.objects.create(
             recebimento=recebimento,
             revisor=request.user,
-            status='PENDENTE' # Define um status inicial
+            status='PENDENTE'
         )
-
-        # 3. Prepara a resposta com os dados da inspeção criada
         serializer = InspecaoQualidadeSerializer(nova_inspecao)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
